@@ -1,0 +1,45 @@
+
+Copyright 2013 Eric Messick (FixedImagePhoto.com/Contact)
+
+This is a user program for interpreting key, shuttle, and jog events
+from a Contour Design ShuttlePRO v2.  It translates these events into
+X keystrokes, mouse button presses, or scroll wheel events.  It was
+developed and tested on kubuntu 12.10.
+
+ShuttlePRO events can generate sequences of multiple keystrokes,
+including the pressing and releasing of modifier keys.  The binding
+can be selected based on the title of the window which is focused.
+
+Build instructions:
+
+# apt-get install build-essential libx11-dev libxtst-dev
+
+$ make
+
+Install instructions:
+
+# cp 99-ShuttlePRO.rules /etc/udev/rules.d
+# make install
+
+This will install the binary "shuttlepro" and a script "shuttle" in
+/usr/local/bin.  The udev .rules file allows global read access to any
+ShuttlePRO v2 devices plugged into the system.  The script passes the
+name of the shuttle device to the binary, so you can configure it
+there if it is different on your system.
+
+Configuration instructions:
+
+Copy the example.shuttlerc file to $HOME/.shuttlerc and edit it
+there.  While you are configuring this file, you probably want to run
+the "shuttle" script from a terminal to see the program output.  Make
+sure /usr/local/bin is in your $PATH.
+
+The program re-reads the .shuttlerc file whenever it notices that the
+file has been changed, but it only checks when a shuttle event is sent
+with a different window focused from the previous shuttle event.  When
+you save a new version of the .shuttlerc file, it is a good idea to
+deliver shuttle events to two different windows to insure that the new
+copy of your file is loaded.
+
+See the example.shuttlerc file for information about the file.  You
+may also want to look at the comment at the top of readconfig.c.

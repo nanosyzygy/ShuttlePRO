@@ -1,0 +1,18 @@
+
+Should be wrapped up in an installation package.
+
+Should start automatically on login.
+  But note that debugging output is useful when configuring.
+
+Should restart on hotplug.
+  This would help with crashes caused by static discharges.
+  If it starts on reboot, needs to notice current user to find config
+  file.
+
+Should probably use uinput instead of XTest.
+
+Might want to allow shuttle positions to allow repeated outputs at a
+specified time interval.
+
+A GUI for setting keystroke bindings would be nice.
+

@@ -1,0 +1,6 @@
+
+# Allows global read access to any ShuttlePRO device
+
+# install this file in /etc/udev/rules.d
+
+ATTRS{name}=="Contour Design ShuttlePRO v2" MODE="0644"
