@@ -294,6 +294,7 @@ main(int argc, char **argv)
   int nread;
   char *dev_name;
   int fd;
+  int first_time = 1;
 
   if (argc != 2) {
     fprintf(stderr, "usage: shuttlepro <device>\n" );
@@ -301,30 +302,39 @@ main(int argc, char **argv)
   }
 
   dev_name = argv[1];
-  fd = open(dev_name, O_RDONLY);
-  if (fd < 0) {
-    perror(dev_name);
-    exit(1);
-  }
-
-  // Flag it as exclusive access
-  if(ioctl( fd, EVIOCGRAB, 1 ) < 0) {
-    perror( "evgrab ioctl" );
-    exit(1);
-  }
 
   initdisplay();
 
   while (1) {
-    nread = read(fd, &ev, sizeof(ev));
-    if (nread == sizeof(ev)) {
-      handle_event(ev);
+    fd = open(dev_name, O_RDONLY);
+    if (fd < 0) {
+      perror(dev_name);
+      if (first_time) {
+	exit(1);
+      }
     } else {
-      if (nread < 0) {
-	perror("read event");
+      // Flag it as exclusive access
+      if(ioctl( fd, EVIOCGRAB, 1 ) < 0) {
+	perror( "evgrab ioctl" );
       } else {
-	fprintf(stderr, "short read: %d\n", nread);
+	first_time = 0;
+	while (1) {
+	  nread = read(fd, &ev, sizeof(ev));
+	  if (nread == sizeof(ev)) {
+	    handle_event(ev);
+	  } else {
+	    if (nread < 0) {
+	      perror("read event");
+	      break;
+	    } else {
+	      fprintf(stderr, "short read: %d\n", nread);
+	      break;
+	    }
+	  }
+	}
       }
     }
+    close(fd);
+    sleep(1);
   }
 }
