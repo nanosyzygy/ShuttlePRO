@@ -1,6 +1,12 @@
 
-# Allows global read access to any ShuttlePRO device
+# Allows global read access to any ShuttlePRO device and autostarts shuttle app
 
 # install this file in /etc/udev/rules.d
 
-ATTRS{name}=="Contour Design ShuttlePRO v2" MODE="0644"
+# ShuttlePRO
+ACTION=="add", ATTRS{name}=="Contour Design ShuttlePRO v2", MODE="0644", RUN+="/usr/local/bin/shuttle /dev/input/by-id/usb-Contour_Design_ShuttlePRO_v2-event-if00 &"
+ACTION=="remove", ATTRS{name}=="Contour Design ShuttlePRO v2", RUN+="/usr/bin/pkill shuttlepro"
+
+#ShuttleXpress
+ACTION=="add", ATTRS{idVendor}=="0b33", ATTRS{idProduct}=="0020", MODE="0644", RUN+="/usr/local/bin/shuttle /dev/input/by-id/usb-Contour_Design_ShuttleXpress-event-if00 &" 
+ACTION=="remove", ATTRS{idVendor}=="0b33", ATTRS{idProduct}=="0020", RUN+="/usr/bin/pkill shuttlepro"

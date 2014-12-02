@@ -1,3 +1,7 @@
 #!/bin/bash
 
-exec shuttlepro /dev/input/by-id/usb-Contour_Design_ShuttlePRO_v2-event-if00
+MYUSER=($(users))
+FILE=$1
+
+su $MYUSER -c "DISPLAY=:0 /usr/local/bin/shuttlepro $FILE"
+

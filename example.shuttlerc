@@ -45,6 +45,12 @@
 #          K10        K11
 #         K12          K13
 
+# The keys on the Contour Shuttle Pro v2 are arranged like this:
+#
+#        K5  K6  K7  K8  K9
+#
+#               Jog   
+
 # After the name of the key being bound, the remainder of the line is
 # the sequence of X KeySyms which will be generated when that event is
 # received.  Look up the KeySyms in /usr/include/X11/keysymdef.h.  In
