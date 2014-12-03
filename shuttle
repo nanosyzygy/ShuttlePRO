@@ -3,5 +3,11 @@
 MYUSER=($(users))
 FILE=$1
 
-su $MYUSER -c "DISPLAY=:0 /usr/local/bin/shuttlepro $FILE"
+while ! [ "$MYUSER" ]; do
+	sleep 10
+	MYUSER=($(users))
+done
 
+pkill shuttlepro
+
+su $MYUSER -c "DISPLAY=:0 /usr/local/bin/shuttlepro $FILE"
