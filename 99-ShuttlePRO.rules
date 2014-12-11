@@ -7,6 +7,8 @@
 ACTION=="add", ATTRS{name}=="Contour Design ShuttlePRO v2", MODE="0644", RUN+="/usr/local/bin/shuttle /dev/input/by-id/usb-Contour_Design_ShuttlePRO_v2-event-if00 &"
 ACTION=="remove", ATTRS{name}=="Contour Design ShuttlePRO v2", RUN+="/usr/bin/pkill shuttlepro"
 
-#ShuttleXpress
-ACTION=="add", ATTRS{idVendor}=="0b33", ATTRS{idProduct}=="0020", MODE="0644", RUN+="/usr/local/bin/shuttle /dev/input/by-id/usb-Contour_Design_ShuttleXpress-event-if00 &" 
+#ShuttleXpress / SpaceShuttle A/V
+ACTION=="add", ATTRS{name}=="Contour Design, Inc. ShuttleXpress", MODE="0644", RUN+="/usr/local/bin/shuttle /dev/input/by-id/usb-Contour_Design_ShuttleXpress-event-if00 &" 
+ACTION=="add", ATTRS{name}=="CAVS SpaceShuttle A/V", MODE="0644", RUN+="/usr/local/bin/shuttle /dev/input/by-id/usb-CAVS_SpaceShuttle_A_V-event-if00 &"
 ACTION=="remove", ATTRS{idVendor}=="0b33", ATTRS{idProduct}=="0020", RUN+="/usr/bin/pkill shuttlepro"
+
