@@ -45,6 +45,13 @@
 #          K10        K11
 #         K12          K13
 
+# The keys on the Contour Shuttle Pro v2 / SpaceShuttle are arranged like this:
+#
+#            K6  K7  K8
+#
+#           K5  Jog   K9
+#  
+
 # After the name of the key being bound, the remainder of the line is
 # the sequence of X KeySyms which will be generated when that event is
 # received.  Look up the KeySyms in /usr/include/X11/keysymdef.h.  In
@@ -108,12 +115,40 @@
  
  JL XK_KP_4     # Frame reverse
  JR XK_KP_1     # Frame forward
+ 
+[Cinelerra-CV Resources] ^Cinelerra-CV: Resources$
+ # use [Default], avoiding main Cinelerra rule
 
+[Cinelerra-CV Load] ^Cinelerra-CV: Load$
+ # use [Default], avoiding main Cinelerra rule
 
+[Cinelerra-CV] ^Cinelerra-CV: [^[:space:]]*$
+
+ K5 XK_KP_0     # Stop
+ K9 XK_KP_3     # Play
+ K6 XK_Home    # Beginning
+ K8 XK_End     # End
+ k7 "z"		# undo
+# K14 "["        # Toggle in
+# K15 "]"        # Toggle out
+
+ S-3 XK_KP_Add  # Fast reverse
+ S-2 XK_KP_6    # Play reverse
+ S-1 XK_KP_5    # Slow reverse
+ S0 XK_KP_0     # Stop
+ S1 XK_KP_2     # Slow forward
+ S2 XK_KP_3     # Play forward
+ S3 XK_KP_Enter # Fast forward
+ 
+ JL XK_KP_4     # Frame reverse
+ JR XK_KP_1     # Frame forward
 
 [Default]
+
  K6 XK_Button_1
- K7 XK_Button_2
+ K7 " "
  K8 XK_Button_3
- JL XK_Scroll_Up
- JR XK_Scroll_Down
+ JL XK_Left
+ JR XK_Right
+ K5 XK_Home
+ K9 XK_End

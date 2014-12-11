@@ -10,7 +10,9 @@ ShuttlePRO events can generate sequences of multiple keystrokes,
 including the pressing and releasing of modifier keys.  The binding
 can be selected based on the title of the window which is focused.
 
-Build instructions:
+To install type ./install from this directyory.
+
+You can also build manually:
 
 # apt-get install build-essential libx11-dev libxtst-dev
 
