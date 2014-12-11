@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Installs the shuttlepro application and config file
+# You will need to be in the sudoers file
+
+echo "You are about to build and install Contour device compatibility layer."
+echo "Please unplug your Contour device."
+echo "You will be asked for your sudo password."
+read -p  "Press enter to continue or ctrl+c to exit."
+
+make
+sudo cp 99-ShuttlePRO.rules /etc/udev/rules.d
+sudo make install
+cp example.shuttlerc $HOME/.shuttlerc
+
+echo "Install complete. You may now plug in your device."
+echo "Configuration options have been installed in $HOME/.shuttlerc"
