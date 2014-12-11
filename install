@@ -11,7 +11,16 @@ read -p  "Press enter to continue or ctrl+c to exit."
 make
 sudo cp 99-ShuttlePRO.rules /etc/udev/rules.d
 sudo make install
-cp example.shuttlerc $HOME/.shuttlerc
+
+shuttlerc="$HOME/.shuttlerc"
+
+if [ -e "$shuttlerc" ]
+then
+	echo "I see you already have a .shuttlerc file in your home directory."
+	echo "It will not be overwritten. Manually copy example.shuttlerc to $shuttlerc if you want to use it."
+else
+	cp example.shuttlerc $shuttlerc
+	echo "Confige file installed in $shuttlerc"
+fi
 
 echo "Install complete. You may now plug in your device."
-echo "Configuration options have been installed in $HOME/.shuttlerc"
