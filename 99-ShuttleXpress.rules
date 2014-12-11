@@ -1,4 +1,4 @@
-# Allows global read access to any ShuttlePRO device and autostarts shuttle app
+# Allows global read access to any ShuttleXpress device and autostarts shuttle app
 
 # install this file in /etc/udev/rules.d
 
