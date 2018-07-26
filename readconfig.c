@@ -652,7 +652,7 @@ read_config_file(void)
   char *home;
   char *line;
   char *s;
-  char *name;
+  char *name = NULL;
   char *regex;
   char *tok;
   char *which_key;
