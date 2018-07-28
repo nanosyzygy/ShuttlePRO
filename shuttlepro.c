@@ -352,12 +352,15 @@ handle_event(EV ev)
 
 void help(char *progname)
 {
-  fprintf(stderr, "Usage: %s [-h] [-r rcfile] [-d[rsk]] device\n", progname);
+  fprintf(stderr, "Usage: %s [-h] [-r rcfile] [-d[rsk]] [device]\n", progname);
   fprintf(stderr, "-h print this message\n");
   fprintf(stderr, "-r config file name (default: SHUTTLE_CONFIG_FILE variable or ~/.shuttlerc)\n");
   fprintf(stderr, "-d debug (r = regex, s = strokes, k = keys; default: all)\n");
-  fprintf(stderr, "device is the name of the shuttle device to open\n");
+  fprintf(stderr, "device, if specified, is the name of the shuttle device to open.\n");
+  fprintf(stderr, "Otherwise the program will try to find a suitable device on its own.\n");
 }
+
+#include <glob.h>
 
 int
 main(int argc, char **argv)
@@ -408,12 +411,28 @@ main(int argc, char **argv)
     }
   }
 
-  if (optind >= argc || optind+1 < argc) {
+  if (optind+1 < argc) {
     help(argv[0]);
     exit(1);
   }
 
-  dev_name = argv[optind];
+  if (optind >= argc) {
+    // Try to find a suitable device.
+    glob_t globbuf;
+    if (glob("/dev/input/by-id/usb-Contour_Design_Shuttle*-event-if*",
+	     0, NULL, &globbuf)) {
+      fprintf(stderr, "%s: found no suitable shuttle device\n", argv[0]);
+      fprintf(stderr, "Please make sure that your shuttle device is connected.\n");
+      fprintf(stderr, "You can also specify the device name on the command line.\n");
+      fprintf(stderr, "Try -h for help.\n");
+      exit(1);
+    } else {
+      dev_name = globbuf.gl_pathv[0];
+      fprintf(stderr, "%s: found shuttle device:\n%s\n", argv[0], dev_name);
+    }
+  } else {
+    dev_name = argv[optind];
+  }
 
   initdisplay();
 
