@@ -350,6 +350,14 @@ handle_event(EV ev)
   }
 }
 
+void help(char *progname)
+{
+  fprintf(stderr, "Usage: %s [-h] [-r rcfile] [-d[rsk]] device\n", progname);
+  fprintf(stderr, "-h print this message\n");
+  fprintf(stderr, "-r config file name (default: SHUTTLE_CONFIG_FILE variable or ~/.shuttlerc)\n");
+  fprintf(stderr, "-d debug (r = regex, s = strokes, k = keys; default: all)\n");
+  fprintf(stderr, "device is the name of the shuttle device to open\n");
+}
 
 int
 main(int argc, char **argv)
@@ -359,13 +367,53 @@ main(int argc, char **argv)
   char *dev_name;
   int fd;
   int first_time = 1;
+  int opt;
 
-  if (argc != 2) {
-    fprintf(stderr, "usage: shuttlepro <device>\n" );
+  while ((opt = getopt(argc, argv, "hd::r:")) != -1) {
+    switch (opt) {
+    case 'h':
+      help(argv[0]);
+      exit(0);
+    case 'd':
+      if (optarg && *optarg) {
+	const char *a = optarg;
+	while (*a) {
+	  switch (*a) {
+	  case 'r':
+	    default_debug_regex = 1;
+	    break;
+	  case 's':
+	    default_debug_strokes = 1;
+	    break;
+	  case 'k':
+	    default_debug_keys = 1;
+	    break;
+	  default:
+	    fprintf(stderr, "%s: unknown debugging option (-d), must be r, s or k\n", argv[0]);
+	    fprintf(stderr, "Try -h for help.\n");
+	    exit(1);
+	  }
+	  ++a;
+	}
+      } else {
+	default_debug_regex = default_debug_strokes = default_debug_keys = 1;
+      }
+      break;
+    case 'r':
+      config_file_name = optarg;
+      break;
+    default:
+      fprintf(stderr, "Try -h for help.\n");
+      exit(1);
+    }
+  }
+
+  if (optind >= argc || optind+1 < argc) {
+    help(argv[0]);
     exit(1);
   }
 
-  dev_name = argv[1];
+  dev_name = argv[optind];
 
   initdisplay();
 

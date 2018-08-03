@@ -66,6 +66,10 @@
 
 #include "shuttle.h"
 
+int default_debug_regex = 0;
+int default_debug_strokes = 0;
+int default_debug_keys = 0;
+
 int debug_regex = 0;
 int debug_strokes = 0;
 int debug_keys = 0;
@@ -264,7 +268,7 @@ free_all_translations(void)
   last_translation_section = NULL;
 }
 
-static char *config_file_name = NULL;
+char *config_file_name = NULL;
 static time_t config_file_modification_time;
 
 static char *token_src = NULL;
@@ -702,9 +706,9 @@ read_config_file(void)
     }
 
     free_all_translations();
-    debug_regex = 0;
-    debug_strokes = 0;
-    debug_keys = 0;
+    debug_regex = default_debug_regex;
+    debug_strokes = default_debug_strokes;
+    debug_keys = default_debug_keys;
 
     while ((line=read_line(f, config_file_name)) != NULL) {
       //printf("line: %s", line);
