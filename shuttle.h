@@ -1,5 +1,6 @@
 
 // Copyright 2013 Eric Messick (FixedImagePhoto.com/Contact)
+// Copyright 2018 Albert Graef <aggraef@gmail.com>
 
 #include <stdlib.h>
 #include <stdio.h>

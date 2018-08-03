@@ -3,6 +3,8 @@
 
   Copyright 2013 Eric Messick (FixedImagePhoto.com/Contact)
 
+  Copyright 2018 Albert Graef <aggraef@gmail.com>, various improvements
+
   Read and process the configuration file ~/.shuttlepro
 
   Lines starting with # are comments.
@@ -24,7 +26,7 @@
   Each "[name] regex" line introduces the list of key and shuttle
   translations for the named translation class.  The name is only used
   for debugging output, and needn't be unique.  The following lines
-  with K, S, and J labels indicate what output should be produced for
+  with K, S, I and J labels indicate what output should be produced for
   the given keypress, shuttle position, shuttle direction, or jog direction.
 
   output is a sequence of one or more key codes with optional up/down

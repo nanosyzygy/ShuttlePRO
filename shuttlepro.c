@@ -5,6 +5,8 @@
 
  Copyright 2013 Eric Messick (FixedImagePhoto.com/Contact)
 
+ Copyright 2018 Albert Graef <aggraef@gmail.com>, various improvements
+
  Based on a version (c) 2006 Trammell Hudson <hudson@osresearch.net>
 
  which was in turn
