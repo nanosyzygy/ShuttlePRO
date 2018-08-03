@@ -95,3 +95,5 @@ typedef struct _translation {
 } translation;
 
 extern translation *get_translation(char *win_title);
+extern void print_stroke_sequence(char *name, char *up_or_down, stroke *s);
+extern int debug_keys;

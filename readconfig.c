@@ -68,6 +68,7 @@
 
 int debug_regex = 0;
 int debug_strokes = 0;
+int debug_keys = 0;
 
 char *
 allocate(size_t len)
@@ -703,6 +704,7 @@ read_config_file(void)
     free_all_translations();
     debug_regex = 0;
     debug_strokes = 0;
+    debug_keys = 0;
 
     while ((line=read_line(f, config_file_name)) != NULL) {
       //printf("line: %s", line);
@@ -751,6 +753,10 @@ read_config_file(void)
       }
       if (!strcmp(tok, "DEBUG_STROKES")) {
 	debug_strokes = 1;
+	continue;
+      }
+      if (!strcmp(tok, "DEBUG_KEYS")) {
+	debug_keys = 1;
 	continue;
       }
       which_key = tok;

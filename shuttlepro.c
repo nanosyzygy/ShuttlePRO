@@ -88,10 +88,36 @@ void
 send_stroke_sequence(translation *tr, int kjs, int index)
 {
   stroke *s;
+  char key_name[100];
 
   s = fetch_stroke(tr, kjs, index);
   if (s == NULL) {
     s = fetch_stroke(default_translation, kjs, index);
+  }
+  if (debug_keys && s) {
+    switch (kjs) {
+    case KJS_SHUTTLE:
+      sprintf(key_name, "S%d", index-7);
+      print_stroke_sequence(key_name, "", s);
+      break;
+    case KJS_SHUTTLE_INCR:
+      sprintf(key_name, "I%s", (index>0)?"R":"L");
+      print_stroke_sequence(key_name, "", s);
+      break;
+    case KJS_JOG:
+      sprintf(key_name, "J%s", (index>0)?"R":"L");
+      print_stroke_sequence(key_name, "", s);
+      break;
+    case KJS_KEY_UP:
+      sprintf(key_name, "K%d", index);
+      print_stroke_sequence(key_name, "U", s);
+      break;
+    case KJS_KEY_DOWN:
+    default:
+      sprintf(key_name, "K%d", index);
+      print_stroke_sequence(key_name, "D", s);
+      break;
+    }
   }
   while (s) {
     send_key(s->keysym, s->press);
