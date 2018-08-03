@@ -12,6 +12,7 @@
   [name] regex
   K<1..15> output
   S<-7..7> output
+  I<LR> output
   J<LR> output
 
   When focus is on a window whose title matches regex, the following
@@ -24,7 +25,7 @@
   translations for the named translation class.  The name is only used
   for debugging output, and needn't be unique.  The following lines
   with K, S, and J labels indicate what output should be produced for
-  the given keypress, shuttle position, or jog direction.
+  the given keypress, shuttle position, shuttle direction, or jog direction.
 
   output is a sequence of one or more key codes with optional up/down
   indicators, or strings of printable characters enclosed in double
@@ -193,6 +194,9 @@ new_translation_section(char *name, char *regex)
   for (i=0; i<NUM_SHUTTLES; i++) {
     ret->shuttle[i] = NULL;
   }
+  for (i=0; i<NUM_SHUTTLE_INCRS; i++) {
+    ret->shuttle_incr[i] = NULL;
+  }
   for (i=0; i<NUM_JOGS; i++) {
     ret->jog[i] = NULL;
   }
@@ -233,6 +237,9 @@ free_translation_section(translation *tr)
     }
     for (i=0; i<NUM_SHUTTLES; i++) {
       free_strokes(tr->shuttle[i]);
+    }
+    for (i=0; i<NUM_SHUTTLE_INCRS; i++) {
+      free_strokes(tr->shuttle_incr[i]);
     }
     for (i=0; i<NUM_JOGS; i++) {
       free_strokes(tr->jog[i]);
@@ -503,12 +510,18 @@ start_translation(translation *tr, char *which_key)
   first_release_stroke = 0;
   regular_key_down = 0;
   modifier_count = 0;
-  // JL, JR
   if (tolower(which_key[0]) == 'j' &&
       (tolower(which_key[1]) == 'l' || tolower(which_key[1]) == 'r') &&
       which_key[2] == '\0') {
+    // JL, JR
     k = tolower(which_key[1]) == 'l' ? 0 : 1;
     first_stroke = &(tr->jog[k]);
+  } else if (tolower(which_key[0]) == 'i' &&
+      (tolower(which_key[1]) == 'l' || tolower(which_key[1]) == 'r') &&
+      which_key[2] == '\0') {
+    // IL, IR
+    k = tolower(which_key[1]) == 'l' ? 0 : 1;
+    first_stroke = &(tr->shuttle_incr[k]);
   } else {
     n = 0;
     sscanf(which_key, "%c%d%n", &c, &k, &n);

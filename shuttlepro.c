@@ -70,6 +70,8 @@ fetch_stroke(translation *tr, int kjs, int index)
     switch (kjs) {
     case KJS_SHUTTLE:
       return tr->shuttle[index];
+    case KJS_SHUTTLE_INCR:
+      return tr->shuttle_incr[index];
     case KJS_JOG:
       return tr->jog[index];
     case KJS_KEY_UP:
@@ -120,8 +122,20 @@ shuttle(int value, translation *tr)
     gettimeofday(&last_shuttle, 0);
     need_synthetic_shuttle = value != 0;
     if( value != shuttlevalue ) {
-      shuttlevalue = value;
+      if (shuttlevalue < -7 || shuttlevalue > 7) {
+	// not yet initialized, assume 0
+	shuttlevalue = 0;
+      }
+      int direction = (value < shuttlevalue) ? -1 : 1;
+      int index = direction > 0 ? 1 : 0;
       send_stroke_sequence(tr, KJS_SHUTTLE, value+7);
+      if (fetch_stroke(tr, KJS_SHUTTLE_INCR, index)) {
+	while (shuttlevalue != value) {
+	  send_stroke_sequence(tr, KJS_SHUTTLE_INCR, index);
+	  shuttlevalue += direction;
+	}
+      } else
+	shuttlevalue = value;
     }
   }
 }

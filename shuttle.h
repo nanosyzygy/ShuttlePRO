@@ -67,6 +67,7 @@
 
 #define NUM_KEYS 15
 #define NUM_SHUTTLES 15
+#define NUM_SHUTTLE_INCRS 2
 #define NUM_JOGS 2
 
 typedef struct _stroke {
@@ -78,7 +79,8 @@ typedef struct _stroke {
 #define KJS_KEY_DOWN 1
 #define KJS_KEY_UP 2
 #define KJS_SHUTTLE 3
-#define KJS_JOG 4
+#define KJS_SHUTTLE_INCR 4
+#define KJS_JOG 5
 
 typedef struct _translation {
   struct _translation *next;
@@ -88,6 +90,7 @@ typedef struct _translation {
   stroke *key_down[NUM_KEYS];
   stroke *key_up[NUM_KEYS];
   stroke *shuttle[NUM_SHUTTLES];
+  stroke *shuttle_incr[NUM_SHUTTLE_INCRS];
   stroke *jog[NUM_JOGS];
 } translation;
 
