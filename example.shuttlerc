@@ -2,29 +2,37 @@
 # Copyright 2013 Eric Messick (FixedImagePhoto.com/Contact)
 #
 # Lines in this file starting with # are comments.
-#
-#
+
 # This file is divided into paragraphs, each specifying the bindings to
 # be used when the keyboard focus is on a specific window.  The
 # paragraph is introduced with a line starting with [.  That line
 # contains the paragraph name (which is only used for debugging output
 # to help you in editing this file) followed by ], followed by a regular
-# expression.  When the title bar of the focused window matches the
+# expression.  When the class or name of the focused window matches the
 # regular expression (see regex(7)), the bindings in the paragraph will
 # be in effect.  The program tries these regular expressions in order,
-# and the first match is used.
+# and the first match is used.  It first tries to match the class
+# (WM_CLASS property) of the window, since that usually provides the
+# better clues for identifying an application. If that fails, it will
+# then also try to match the window's title (WM_NAME property).
+
+# NB: Try to be as specific with the regular expression as possible, in
+# order to prevent accidental matches.  Often an application uses its
+# name as the class name or in its title bar, in which case finding a
+# suitable regex should be relatively easy.  See below for some
+# examples.
 
 # If there is no regex on the line, like the [Default] line near the
-# bottom, the paragraph acts as a default.  Any window title which does
-# not match any regex will use the default bindings.  Any keys which are
-# not specified in the paragraph which does match will use the default
-# bindings for those keys.
+# bottom, the paragraph acts as a default.  Any window class and title
+# which does not match any regex will use the default bindings.  Any
+# keys which are not specified in the paragraph which does match will
+# use the default bindings for those keys.
 
 # While you are working on regular expressions to match your window
-# names, is is useful to see the window names and paragraph names which
-# the program finds as you generate ShuttlePRO events.  Run the shuttle
-# program in a terminal window and remove the comment character from the
-# following line:
+# names, is is useful to see the window names and classes, as well as
+# the paragraph names which the program finds as you generate ShuttlePRO
+# events.  Run the shuttle program in a terminal window and remove the
+# comment character from the following line:
 
 #DEBUG_REGEX
 
@@ -34,6 +42,12 @@
 # positions, S0 for the rest position in the center, and S1 through S7
 # for the clockwise positions.  The jog wheel emits two events named JL
 # and JR, for counter-clockwise and clockwise rotations respectively.
+
+# Some programs may expect the shuttle wheel to work like a secondary
+# jog wheel.  To accommodate these, key bindings can also be specified
+# using the incremental shuttle events IL and IR, which indicate
+# counter-clockwise and clockwise rotations, and work in the same
+# fashion as the jog wheel (albeit with a limited range of -7 .. 7).
 
 # The keys on the Contour Shuttle Pro v2 are arranged like this:
 #
@@ -80,6 +94,16 @@
 
 #DEBUG_STROKES
 
+# You can also use the following option to have the recognized key
+# bindings printed out as the program executes them, in the same format
+# as DEBUG_STROKES:
+
+#DEBUG_KEYS
+
+# NOTE: The debugging options can also be specified on the command line
+# using -d in conjunction with any of the letters r, s and k. Just -d
+# without any option letter turns on all debugging options.
+
 # As one of the main reasons to use a ShuttlePRO is video editing, I've
 # included a sample set of bindings for Cinelerra as an example.
 
@@ -110,6 +134,57 @@
  JR XK_KP_1     # Frame forward
 
 
+# AG <aggraef@gmail.com>: Here are some of the bindings that I use. They are
+# for the Shuttle Xpress, so they use only a limited set of buttons.
+
+# Shotcut (WM_CLASS is "shotcut")
+# see https://www.shotcut.org/howtos/keyboard-shortcuts/
+
+[Shotcut] ^shotcut$
+
+ K7 XK_space    # Play/Pause
+ K6 XK_Home     # Beginning
+ K8 XK_End      # End
+ K5 "I"         # Set In
+ K9 "O"         # Set Out
+
+# Shotcut uses the customary J-K-L shortcuts, each successive J or L key then
+# increments the playback speed in the corresponding direction. Thus we can
+# simply treat the shuttle like a secondary jog wheel here.
+ IL "J"         # Rewind
+ IR "L"         # Forward
+
+# The jog wheel moves single frames to the left or the right.
+ JL XK_Left     # Frame reverse
+ JR XK_Right    # Frame forward
+
+
+# Kdenlive has its own built-in support for the Shuttle, but as the
+# shuttlepro program blocks the device when it's running, we include
+# some sensible bindings here anyway (pretty much the same as Shotcut
+# above, but the shuttle has to be treated a little differently).
+
+[Kdenlive] ^kdenlive$
+
+ K7 XK_space    # Play/Pause
+ K6 XK_Home     # Beginning
+ K8 XK_End      # End
+ K5 "I"         # Set In
+ K9 "O"         # Set Out
+
+ S-3 "KJJJ"     # Rewind+2
+ S-2 "KJJ"      # Rewind+1
+ S-1 "KJ"       # Rewind
+ S0 "K"         # Stop
+ S1 "KL"        # Forward
+ S2 "KLL"       # Forward+1
+ S3 "KLLL"      # Forward+2
+
+ JL XK_Left     # Frame reverse
+ JR XK_Right    # Frame forward
+
+
+# Default (mouse emulation)
 
 [Default]
  K6 XK_Button_1

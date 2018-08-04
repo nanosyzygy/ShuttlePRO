@@ -3,6 +3,8 @@
 
   Copyright 2013 Eric Messick (FixedImagePhoto.com/Contact)
 
+  Copyright 2018 Albert Graef <aggraef@gmail.com>, various improvements
+
   Read and process the configuration file ~/.shuttlepro
 
   Lines starting with # are comments.
@@ -12,19 +14,20 @@
   [name] regex
   K<1..15> output
   S<-7..7> output
+  I<LR> output
   J<LR> output
 
-  When focus is on a window whose title matches regex, the following
-  translation class is in effect.  An empty regex for the last class
-  will always match, allowing default translations.  Any output
+  When focus is on a window whose class or title matches regex, the
+  following translation class is in effect.  An empty regex for the last
+  class will always match, allowing default translations.  Any output
   sequences not bound in a matched section will be loaded from the
   default section if they are bound there.
 
   Each "[name] regex" line introduces the list of key and shuttle
   translations for the named translation class.  The name is only used
   for debugging output, and needn't be unique.  The following lines
-  with K, S, and J labels indicate what output should be produced for
-  the given keypress, shuttle position, or jog direction.
+  with K, S, I and J labels indicate what output should be produced for
+  the given keypress, shuttle position, shuttle direction, or jog direction.
 
   output is a sequence of one or more key codes with optional up/down
   indicators, or strings of printable characters enclosed in double
@@ -65,8 +68,13 @@
 
 #include "shuttle.h"
 
+int default_debug_regex = 0;
+int default_debug_strokes = 0;
+int default_debug_keys = 0;
+
 int debug_regex = 0;
 int debug_strokes = 0;
+int debug_keys = 0;
 
 char *
 allocate(size_t len)
@@ -193,6 +201,9 @@ new_translation_section(char *name, char *regex)
   for (i=0; i<NUM_SHUTTLES; i++) {
     ret->shuttle[i] = NULL;
   }
+  for (i=0; i<NUM_SHUTTLE_INCRS; i++) {
+    ret->shuttle_incr[i] = NULL;
+  }
   for (i=0; i<NUM_JOGS; i++) {
     ret->jog[i] = NULL;
   }
@@ -234,6 +245,9 @@ free_translation_section(translation *tr)
     for (i=0; i<NUM_SHUTTLES; i++) {
       free_strokes(tr->shuttle[i]);
     }
+    for (i=0; i<NUM_SHUTTLE_INCRS; i++) {
+      free_strokes(tr->shuttle_incr[i]);
+    }
     for (i=0; i<NUM_JOGS; i++) {
       free_strokes(tr->jog[i]);
     }
@@ -256,7 +270,7 @@ free_all_translations(void)
   last_translation_section = NULL;
 }
 
-static char *config_file_name = NULL;
+char *config_file_name = NULL;
 static time_t config_file_modification_time;
 
 static char *token_src = NULL;
@@ -503,12 +517,18 @@ start_translation(translation *tr, char *which_key)
   first_release_stroke = 0;
   regular_key_down = 0;
   modifier_count = 0;
-  // JL, JR
   if (tolower(which_key[0]) == 'j' &&
       (tolower(which_key[1]) == 'l' || tolower(which_key[1]) == 'r') &&
       which_key[2] == '\0') {
+    // JL, JR
     k = tolower(which_key[1]) == 'l' ? 0 : 1;
     first_stroke = &(tr->jog[k]);
+  } else if (tolower(which_key[0]) == 'i' &&
+      (tolower(which_key[1]) == 'l' || tolower(which_key[1]) == 'r') &&
+      which_key[2] == '\0') {
+    // IL, IR
+    k = tolower(which_key[1]) == 'l' ? 0 : 1;
+    first_stroke = &(tr->shuttle_incr[k]);
   } else {
     n = 0;
     sscanf(which_key, "%c%d%n", &c, &k, &n);
@@ -652,7 +672,7 @@ read_config_file(void)
   char *home;
   char *line;
   char *s;
-  char *name;
+  char *name = NULL;
   char *regex;
   char *tok;
   char *which_key;
@@ -688,8 +708,9 @@ read_config_file(void)
     }
 
     free_all_translations();
-    debug_regex = 0;
-    debug_strokes = 0;
+    debug_regex = default_debug_regex;
+    debug_strokes = default_debug_strokes;
+    debug_keys = default_debug_keys;
 
     while ((line=read_line(f, config_file_name)) != NULL) {
       //printf("line: %s", line);
@@ -738,6 +759,10 @@ read_config_file(void)
       }
       if (!strcmp(tok, "DEBUG_STROKES")) {
 	debug_strokes = 1;
+	continue;
+      }
+      if (!strcmp(tok, "DEBUG_KEYS")) {
+	debug_keys = 1;
 	continue;
       }
       which_key = tok;
@@ -790,7 +815,7 @@ read_config_file(void)
 }
 
 translation *
-get_translation(char *win_title)
+get_translation(char *win_title, char *win_class)
 {
   translation *tr;
 
@@ -798,6 +823,12 @@ get_translation(char *win_title)
   tr = first_translation_section;
   while (tr != NULL) {
     if (tr->is_default) {
+      return tr;
+    }
+    // AG: We first try to match the class name, since it usually provides
+    // better identification clues.
+    if (win_class && *win_class &&
+	regexec(&tr->regex, win_class, 0, NULL, 0) == 0) {
       return tr;
     }
     if (regexec(&tr->regex, win_title, 0, NULL, 0) == 0) {

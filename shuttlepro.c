@@ -5,6 +5,8 @@
 
  Copyright 2013 Eric Messick (FixedImagePhoto.com/Contact)
 
+ Copyright 2018 Albert Graef <aggraef@gmail.com>, various improvements
+
  Based on a version (c) 2006 Trammell Hudson <hudson@osresearch.net>
 
  which was in turn
@@ -70,6 +72,8 @@ fetch_stroke(translation *tr, int kjs, int index)
     switch (kjs) {
     case KJS_SHUTTLE:
       return tr->shuttle[index];
+    case KJS_SHUTTLE_INCR:
+      return tr->shuttle_incr[index];
     case KJS_JOG:
       return tr->jog[index];
     case KJS_KEY_UP:
@@ -86,10 +90,36 @@ void
 send_stroke_sequence(translation *tr, int kjs, int index)
 {
   stroke *s;
+  char key_name[100];
 
   s = fetch_stroke(tr, kjs, index);
   if (s == NULL) {
     s = fetch_stroke(default_translation, kjs, index);
+  }
+  if (debug_keys && s) {
+    switch (kjs) {
+    case KJS_SHUTTLE:
+      sprintf(key_name, "S%d", index-7);
+      print_stroke_sequence(key_name, "", s);
+      break;
+    case KJS_SHUTTLE_INCR:
+      sprintf(key_name, "I%s", (index>0)?"R":"L");
+      print_stroke_sequence(key_name, "", s);
+      break;
+    case KJS_JOG:
+      sprintf(key_name, "J%s", (index>0)?"R":"L");
+      print_stroke_sequence(key_name, "", s);
+      break;
+    case KJS_KEY_UP:
+      sprintf(key_name, "K%d", index);
+      print_stroke_sequence(key_name, "U", s);
+      break;
+    case KJS_KEY_DOWN:
+    default:
+      sprintf(key_name, "K%d", index);
+      print_stroke_sequence(key_name, "D", s);
+      break;
+    }
   }
   while (s) {
     send_key(s->keysym, s->press);
@@ -120,8 +150,20 @@ shuttle(int value, translation *tr)
     gettimeofday(&last_shuttle, 0);
     need_synthetic_shuttle = value != 0;
     if( value != shuttlevalue ) {
-      shuttlevalue = value;
+      if (shuttlevalue < -7 || shuttlevalue > 7) {
+	// not yet initialized, assume 0
+	shuttlevalue = 0;
+      }
+      int direction = (value < shuttlevalue) ? -1 : 1;
+      int index = direction > 0 ? 1 : 0;
       send_stroke_sequence(tr, KJS_SHUTTLE, value+7);
+      if (fetch_stroke(tr, KJS_SHUTTLE_INCR, index)) {
+	while (shuttlevalue != value) {
+	  send_stroke_sequence(tr, KJS_SHUTTLE_INCR, index);
+	  shuttlevalue += direction;
+	}
+      } else
+	shuttlevalue = value;
     }
   }
 }
@@ -203,7 +245,26 @@ get_window_name(Window win)
 }
 
 char *
-walk_window_tree(Window win)
+get_window_class(Window win)
+{
+  Atom prop = XInternAtom(display, "WM_CLASS", False);
+  Atom type;
+  int form;
+  unsigned long remain, len;
+  unsigned char *list;
+
+  if (XGetWindowProperty(display, win, prop, 0, 1024, False,
+			 AnyPropertyType, &type, &form, &len, &remain,
+			 &list) != Success) {
+    fprintf(stderr, "XGetWindowProperty failed for window 0x%x\n", (int)win);
+    return NULL;
+  }
+
+  return (char*)list;
+}
+
+char *
+walk_window_tree(Window win, char **window_class)
 {
   char *window_name;
   Window root = 0;
@@ -214,6 +275,7 @@ walk_window_tree(Window win)
   while (win != root) {
     window_name = get_window_name(win);
     if (window_name != NULL) {
+      *window_class = get_window_class(win);
       return window_name;
     }
     if (XQueryTree(display, win, &root, &parent, &children, &nchildren)) {
@@ -235,28 +297,32 @@ get_focused_window_translation()
 {
   Window focus;
   int revert_to;
-  char *window_name = NULL;
+  char *window_name = NULL, *window_class = NULL;
   char *name;
 
   XGetInputFocus(display, &focus, &revert_to);
   if (focus != last_focused_window) {
     last_focused_window = focus;
-    window_name = walk_window_tree(focus);
+    window_name = walk_window_tree(focus, &window_class);
     if (window_name == NULL) {
       name = "-- Unlabeled Window --";
     } else {
       name = window_name;
     }
-    last_window_translation = get_translation(name);
+    last_window_translation = get_translation(name, window_class);
     if (debug_regex) {
       if (last_window_translation != NULL) {
-	printf("translation: %s for %s\n", last_window_translation->name, name);
+	printf("translation: %s for %s (class %s)\n",
+	       last_window_translation->name, name, window_class);
       } else {
-	printf("no translation found for %s\n", name);
+	printf("no translation found for %s (class %s)\n", name, window_class);
       }
     }
     if (window_name != NULL) {
       XFree(window_name);
+    }
+    if (window_class != NULL) {
+      XFree(window_class);
     }
   }
   return last_window_translation;
@@ -286,6 +352,17 @@ handle_event(EV ev)
   }
 }
 
+void help(char *progname)
+{
+  fprintf(stderr, "Usage: %s [-h] [-r rcfile] [-d[rsk]] [device]\n", progname);
+  fprintf(stderr, "-h print this message\n");
+  fprintf(stderr, "-r config file name (default: SHUTTLE_CONFIG_FILE variable or ~/.shuttlerc)\n");
+  fprintf(stderr, "-d debug (r = regex, s = strokes, k = keys; default: all)\n");
+  fprintf(stderr, "device, if specified, is the name of the shuttle device to open.\n");
+  fprintf(stderr, "Otherwise the program will try to find a suitable device on its own.\n");
+}
+
+#include <glob.h>
 
 int
 main(int argc, char **argv)
@@ -295,13 +372,69 @@ main(int argc, char **argv)
   char *dev_name;
   int fd;
   int first_time = 1;
+  int opt;
 
-  if (argc != 2) {
-    fprintf(stderr, "usage: shuttlepro <device>\n" );
+  while ((opt = getopt(argc, argv, "hd::r:")) != -1) {
+    switch (opt) {
+    case 'h':
+      help(argv[0]);
+      exit(0);
+    case 'd':
+      if (optarg && *optarg) {
+	const char *a = optarg;
+	while (*a) {
+	  switch (*a) {
+	  case 'r':
+	    default_debug_regex = 1;
+	    break;
+	  case 's':
+	    default_debug_strokes = 1;
+	    break;
+	  case 'k':
+	    default_debug_keys = 1;
+	    break;
+	  default:
+	    fprintf(stderr, "%s: unknown debugging option (-d), must be r, s or k\n", argv[0]);
+	    fprintf(stderr, "Try -h for help.\n");
+	    exit(1);
+	  }
+	  ++a;
+	}
+      } else {
+	default_debug_regex = default_debug_strokes = default_debug_keys = 1;
+      }
+      break;
+    case 'r':
+      config_file_name = optarg;
+      break;
+    default:
+      fprintf(stderr, "Try -h for help.\n");
+      exit(1);
+    }
+  }
+
+  if (optind+1 < argc) {
+    help(argv[0]);
     exit(1);
   }
 
-  dev_name = argv[1];
+  if (optind >= argc) {
+    // Try to find a suitable device.
+    glob_t globbuf;
+    if (glob("/dev/input/by-id/usb-Contour_Design_Shuttle*-event-if*",
+	     0, NULL, &globbuf)) {
+      fprintf(stderr, "%s: found no suitable shuttle device\n", argv[0]);
+      fprintf(stderr, "Please make sure that your shuttle device is connected.\n");
+      fprintf(stderr, "You can also specify the device name on the command line.\n");
+      fprintf(stderr, "Try -h for help.\n");
+      exit(1);
+    } else {
+      dev_name = globbuf.gl_pathv[0];
+      fprintf(stderr, "%s: found shuttle device:\n%s\n", argv[0], dev_name);
+    }
+  } else {
+    dev_name = argv[optind];
+  }
 
   initdisplay();
 
