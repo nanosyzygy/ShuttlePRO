@@ -15,9 +15,9 @@
   I<LR> output
   J<LR> output
 
-  When focus is on a window whose title matches regex, the following
-  translation class is in effect.  An empty regex for the last class
-  will always match, allowing default translations.  Any output
+  When focus is on a window whose class or title matches regex, the
+  following translation class is in effect.  An empty regex for the last
+  class will always match, allowing default translations.  Any output
   sequences not bound in a matched section will be loaded from the
   default section if they are bound there.
 
@@ -809,7 +809,7 @@ read_config_file(void)
 }
 
 translation *
-get_translation(char *win_title)
+get_translation(char *win_title, char *win_class)
 {
   translation *tr;
 
@@ -817,6 +817,12 @@ get_translation(char *win_title)
   tr = first_translation_section;
   while (tr != NULL) {
     if (tr->is_default) {
+      return tr;
+    }
+    // AG: We first try to match the class name, since it usually provides
+    // better identification clues.
+    if (win_class && *win_class &&
+	regexec(&tr->regex, win_class, 0, NULL, 0) == 0) {
       return tr;
     }
     if (regexec(&tr->regex, win_title, 0, NULL, 0) == 0) {

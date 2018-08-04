@@ -243,7 +243,26 @@ get_window_name(Window win)
 }
 
 char *
-walk_window_tree(Window win)
+get_window_class(Window win)
+{
+  Atom prop = XInternAtom(display, "WM_CLASS", False);
+  Atom type;
+  int form;
+  unsigned long remain, len;
+  unsigned char *list;
+
+  if (XGetWindowProperty(display, win, prop, 0, 1024, False,
+			 AnyPropertyType, &type, &form, &len, &remain,
+			 &list) != Success) {
+    fprintf(stderr, "XGetWindowProperty failed for window 0x%x\n", (int)win);
+    return NULL;
+  }
+
+  return (char*)list;
+}
+
+char *
+walk_window_tree(Window win, char **window_class)
 {
   char *window_name;
   Window root = 0;
@@ -254,6 +273,7 @@ walk_window_tree(Window win)
   while (win != root) {
     window_name = get_window_name(win);
     if (window_name != NULL) {
+      *window_class = get_window_class(win);
       return window_name;
     }
     if (XQueryTree(display, win, &root, &parent, &children, &nchildren)) {
@@ -275,28 +295,32 @@ get_focused_window_translation()
 {
   Window focus;
   int revert_to;
-  char *window_name = NULL;
+  char *window_name = NULL, *window_class = NULL;
   char *name;
 
   XGetInputFocus(display, &focus, &revert_to);
   if (focus != last_focused_window) {
     last_focused_window = focus;
-    window_name = walk_window_tree(focus);
+    window_name = walk_window_tree(focus, &window_class);
     if (window_name == NULL) {
       name = "-- Unlabeled Window --";
     } else {
       name = window_name;
     }
-    last_window_translation = get_translation(name);
+    last_window_translation = get_translation(name, window_class);
     if (debug_regex) {
       if (last_window_translation != NULL) {
-	printf("translation: %s for %s\n", last_window_translation->name, name);
+	printf("translation: %s for %s (class %s)\n",
+	       last_window_translation->name, name, window_class);
       } else {
-	printf("no translation found for %s\n", name);
+	printf("no translation found for %s (class %s)\n", name, window_class);
       }
     }
     if (window_name != NULL) {
       XFree(window_name);
+    }
+    if (window_class != NULL) {
+      XFree(window_class);
     }
   }
   return last_window_translation;
